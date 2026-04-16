@@ -5,6 +5,7 @@
 
 > **PWA** (Progressive Web App) de navigation à vélo à Bogotá — fonctionne directement dans le navigateur du téléphone, sans installation.
 
+App minimaliste, et utiliser peu de ressources pour rester bien fluide 
 ---
 
 ## 🎯 Objectif
