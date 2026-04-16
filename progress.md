@@ -28,11 +28,11 @@
 
 ## Étape 2 — Intégration de la carte
 
-- [ ] 2.1 Installer Leaflet.js : `npm install leaflet`
-- [ ] 2.2 Créer un composant `MapView.vue`
-- [ ] 2.3 Afficher une carte OpenStreetMap centrée sur Bogotá
-- [ ] 2.4 S'assurer que la carte prend toute la hauteur de l'écran
-- [ ] 2.5 Commit : `feat: add Leaflet map centered on Bogotá`
+- [x] 2.1 Installer Leaflet.js : `npm install leaflet`
+- [x] 2.2 Créer un composant `MapView.vue`
+- [x] 2.3 Afficher une carte OpenStreetMap centrée sur Bogotá
+- [x] 2.4 S'assurer que la carte prend toute la hauteur de l'écran
+- [x] 2.5 Commit : `feat: add Leaflet map centered on Bogotá`
 
 ### ✅ Validation étape 2
 - La carte OSM s'affiche correctement sur desktop et mobile (DevTools)
