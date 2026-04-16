@@ -41,6 +41,21 @@
 
 ---
 
+## Étape 2bis — Aménagements cyclables (ciclorrutas)
+
+- [x] 2bis.1 Récupérer les données cyclables de Bogotá via l'API Overpass (OSM)
+- [x] 2bis.2 Convertir les données en GeoJSON et les ajouter comme source MapLibre
+- [x] 2bis.3 Afficher les pistes avec un code couleur (piste dédiée / bande / voie partagée)
+- [x] 2bis.4 Ajouter un bouton on/off pour afficher/masquer la couche
+- [x] 2bis.5 Commit : `feat: add cycling infrastructure layer with toggle`
+
+### ✅ Validation étape 2bis
+- Les ciclorrutas de Bogotá apparaissent sur la carte en vert
+- Le bouton toggle affiche/masque la couche
+- Fonctionne sur mobile
+
+---
+
 ## Étape 3 — Structure de l'interface
 
 - [ ] 3.1 Créer le panneau latéral gauche (composant `SidePanel.vue`)
