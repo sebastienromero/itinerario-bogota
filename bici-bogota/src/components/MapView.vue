@@ -29,48 +29,40 @@ onMounted(async () => {
     style: 'https://tiles.openfreemap.org/styles/bright',
     center: [-74.0721, 4.711],
     zoom: 13,
+    antialias: true,
+    fadeDuration: 0,
+    localIdeographFontFamily: 'sans-serif',
+    maxZoom: 18,
   })
   mapInstance = map
 
   map.addControl(new maplibregl.NavigationControl(), 'top-right')
 
   map.on('load', () => {
+    // Ciclorutas
     map.addSource('cycling', {
       type: 'geojson',
       data: '/ciclorutas.geojson',
     })
-
     map.addLayer({
       id: 'cycling-layer',
       type: 'line',
       source: 'cycling',
-      layout: {
-        'line-join': 'round',
-        'line-cap': 'round',
-        visibility: 'none',
-      },
-      paint: {
-        'line-color': '#000000',
-        'line-width': 1.5,
-        'line-opacity': 0.85,
-      },
+      layout: { 'line-join': 'round', 'line-cap': 'round', visibility: 'none' },
+      paint: { 'line-color': '#000000', 'line-width': 1.5, 'line-opacity': 0.85 },
     })
-  })
 
-  map.on('styledata', () => {
+    // Labels de rues plus lisibles (une seule fois)
     map.getStyle().layers.forEach((layer) => {
       if (layer.type !== 'symbol') return
-
       const id = layer.id.toLowerCase()
       const sourceLayer = (layer['source-layer'] ?? '').toLowerCase()
       const isStreetLabel =
         id.includes('road') || id.includes('street') || id.includes('transport') ||
         sourceLayer.includes('road') || sourceLayer.includes('transport')
-
       if (isStreetLabel) {
         map.setLayerZoomRange(layer.id, 10, 24)
         map.setLayoutProperty(layer.id, 'text-size', 13)
-        map.setLayoutProperty(layer.id, 'text-font', ['Noto Sans Bold'])
         map.setPaintProperty(layer.id, 'text-color', '#1a1a1a')
         map.setPaintProperty(layer.id, 'text-halo-color', '#ffffff')
         map.setPaintProperty(layer.id, 'text-halo-width', 2)
@@ -85,6 +77,10 @@ onMounted(async () => {
   width: 100%;
   height: 100vh;
   position: relative;
+  /* Force GPU compositing sur Safari iOS */
+  -webkit-transform: translateZ(0);
+  transform: translateZ(0);
+  will-change: transform;
 }
 
 .toggle-wrap {
