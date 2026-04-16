@@ -13,10 +13,10 @@
 - [x] 1.4 Installer Node.js (LTS) et npm
 - [x] 1.5 Créer le projet Vue.js avec Vite : `npm create vue@latest`
 - [x] 1.6 Installer le plugin PWA : `npm install vite-plugin-pwa`
-- [ ] 1.7 Configurer le plugin PWA (nom de l'app, icône, couleurs)
-- [ ] 1.8 Lancer le projet en local (`npm run dev`) et vérifier que la page d'accueil s'affiche
-- [ ] 1.9 Supprimer le contenu par défaut de Vue (composants d'exemple)
-- [ ] 1.10 Premier commit : `init: scaffolding Vue.js PWA project`
+- [x] 1.7 Configurer le plugin PWA (nom de l'app, icône, couleurs)
+- [x] 1.8 Lancer le projet en local (`npm run dev`) et vérifier que la page d'accueil s'affiche
+- [x] 1.9 Supprimer le contenu par défaut de Vue (composants d'exemple)
+- [x] 1.10 Premier commit : `init: scaffolding Vue.js PWA project`
 
 ### ✅ Validation étape 1
 - Le projet tourne en local sur `http://localhost:5173`
