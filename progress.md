@@ -11,7 +11,7 @@
 - [ ] 1.2 Créer un nouveau dépôt public `bici-bogota` sur GitHub
 - [ ] 1.3 Cloner le dépôt en local
 - [ ] 1.4 Installer Node.js (LTS) et npm
-- [ ] 1.5 Créer le projet Vue.js avec Vite : `npm create vue@latest`
+- [x] 1.5 Créer le projet Vue.js avec Vite : `npm create vue@latest`
 - [ ] 1.6 Installer le plugin PWA : `npm install vite-plugin-pwa`
 - [ ] 1.7 Configurer le plugin PWA (nom de l'app, icône, couleurs)
 - [ ] 1.8 Lancer le projet en local (`npm run dev`) et vérifier que la page d'accueil s'affiche
