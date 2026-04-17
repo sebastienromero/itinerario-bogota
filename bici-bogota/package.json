@@ -9,6 +9,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@googlemaps/js-api-loader": "^2.0.2",
     "maplibre-gl": "^5.23.0",
     "pinia": "^3.0.4",
     "vite-plugin-pwa": "^1.2.0",

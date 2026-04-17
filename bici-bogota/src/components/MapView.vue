@@ -10,12 +10,43 @@
 </template>
 
 <script setup>
-import { onMounted, ref } from 'vue'
+import { onMounted, ref, watch } from 'vue'
 import maplibregl from 'maplibre-gl'
 import 'maplibre-gl/dist/maplibre-gl.css'
+import { useRouteStore } from '../stores/route.js'
 
 const showCycling = ref(false)
 let mapInstance = null
+
+const store = useRouteStore()
+let markerDepart = null
+let markerArrivee = null
+
+function makeMarker(color) {
+  const el = document.createElement('div')
+  el.style.cssText = `width:14px;height:14px;border-radius:50%;background:${color};border:2.5px solid #fff;box-shadow:0 1px 4px rgba(0,0,0,.4);`
+  return el
+}
+
+watch(() => store.depart, (place) => {
+  if (!mapInstance) return
+  markerDepart?.remove()
+  if (!place) return
+  markerDepart = new maplibregl.Marker({ element: makeMarker('#2e7d32') })
+    .setLngLat([place.lon, place.lat])
+    .addTo(mapInstance)
+  mapInstance.flyTo({ center: [place.lon, place.lat], zoom: 15, duration: 800 })
+})
+
+watch(() => store.arrivee, (place) => {
+  if (!mapInstance) return
+  markerArrivee?.remove()
+  if (!place) return
+  markerArrivee = new maplibregl.Marker({ element: makeMarker('#c62828') })
+    .setLngLat([place.lon, place.lat])
+    .addTo(mapInstance)
+  mapInstance.flyTo({ center: [place.lon, place.lat], zoom: 15, duration: 800 })
+})
 
 function toggleCycling() {
   if (!mapInstance.getLayer('cycling-layer')) return
@@ -76,6 +107,7 @@ onMounted(async () => {
 #map {
   width: 100%;
   height: 100vh;
+  height: 100dvh; /* exclut les barres UI sur iOS Safari */
   position: relative;
   /* Force GPU compositing sur Safari iOS */
   -webkit-transform: translateZ(0);
@@ -95,6 +127,15 @@ onMounted(async () => {
   padding: 6px 12px;
   border-radius: 8px;
   box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+}
+
+/* Mobile : juste sous le panneau de recherche */
+@media (max-width: 767px) {
+  .toggle-wrap {
+    top: 120px;
+    right: 10px;
+    bottom: auto;
+  }
 }
 
 .toggle-label {
