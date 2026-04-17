@@ -7,7 +7,7 @@ import App from './App.vue'
 const pinia = createPinia()
 const router = createRouter({
   history: createWebHistory(),
-  routes: [],
+  routes: [{ path: '/', component: App }],
 })
 
 createApp(App).use(pinia).use(router).mount('#app')
