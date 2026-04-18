@@ -104,10 +104,10 @@
 
 ## Étape 6 — Affichage des ciclorutas
 
-- [ ] 6.1 Récupérer les données ciclorutas via l'**Overpass API** (OSM)
-- [ ] 6.2 Afficher les ciclorutas sur la carte (couleur distincte, ex: vert)
-- [ ] 6.3 Mettre en cache les données pour éviter des requêtes répétées
-- [ ] 6.4 Commit : `feat: display ciclorutas layer from OpenStreetMap`
+- [x] 6.1 Récupérer les données ciclorutas via l'**Overpass API** (OSM)
+- [x] 6.2 Afficher les ciclorutas sur la carte (couleur distincte, ex: vert)
+- [x] 6.3 Mettre en cache les données pour éviter des requêtes répétées
+- [x] 6.4 Commit : `feat: display ciclorutas layer from OpenStreetMap`
 
 ### ✅ Validation étape 6
 - Les ciclorutas apparaissent clairement sur la carte
