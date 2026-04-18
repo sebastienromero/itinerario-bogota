@@ -142,7 +142,7 @@
 - [x] 7bis.2 Tester **Valhalla OSM** (branche `main`) — résultats corrects mais zigzag
 - [x] 7bis.3 Tester **ORS** (branche `feat/routing-ors`) — cycling-regular ✅, cycling-safe indispo
 - [x] 7bis.4 Tester **GraphHopper** (branche `feat/routing-graphhopper`) — bike/mtb/racingbike ✅
-- [ ] 7bis.5 **→ PROCHAINE FOIS : choisir le moteur retenu et merger sur `main`**
+- [ ] 7bis.5 **→ PROCHAINE FOIS : choisir le moteur retenu (regarder itineraire vers probikes aussi) et merger sur `main`**
 
 ### Résultats benchmark (mode équilibré, même trajet)
 | Moteur | Chapinero→Usaquén | Candelaria→Salitre | Kennedy→Av.68 |
