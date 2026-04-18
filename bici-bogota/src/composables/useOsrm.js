@@ -1,28 +1,29 @@
 /**
- * Routing vélo via Valhalla (instance publique OpenStreetMap).
- * Aucune clé API nécessaire.
- * 3 modes : securise (ciclorutas max), equilibre (compromis), court (distance min)
+ * Routing vélo via OpenRouteService (ORS).
+ * Profils : cycling-safe (sécurisé), cycling-regular (équilibré), cycling-road (court/rapide)
+ * Clé API gratuite requise — 2000 req/jour
+ * https://openrouteservice.org
  */
 
-const VALHALLA_URL = 'https://valhalla1.openstreetmap.de/route'
+const ORS_URL = 'https://api.openrouteservice.org/v2/directions'
+const ORS_KEY = import.meta.env.VITE_ORS_KEY
 
-// Paramètres Valhalla par mode
-// use_roads           : 0 = évite routes, 1 = préfère routes
-// use_tracks          : 0 = évite pistes/ciclorutas, 1 = préfère pistes
-// use_living_streets  : 0 = évite les rues résidentielles (reste sur axes principaux = moins de virages)
-// use_hills           : 0.5 = neutre (on ignore les montées à Bogotá)
-// avoid_bad_surfaces  : évite les surfaces dégradées
+// Profils ORS par mode
+// cycling-mountain : préfère les chemins et pistes hors route (le plus proche de "sécurisé")
+// cycling-regular  : équilibre sécurité / distance
+// cycling-road     : préfère les routes rapides (distance min)
+// Note: cycling-safe est déprécié sur l'API publique ORS
 export const ROUTE_MODES = {
-  securise:  { use_roads: 0.0, use_tracks: 1.0, use_living_streets: 0.1, use_hills: 0.5, avoid_bad_surfaces: 0.5 },
-  equilibre: { use_roads: 0.3, use_tracks: 0.8, use_living_streets: 0.1, use_hills: 0.5, avoid_bad_surfaces: 0.25 },
-  court:     { use_roads: 0.7, use_tracks: 0.5, use_living_streets: 0.1, use_hills: 0.5, avoid_bad_surfaces: 0.1 },
+  securise:  { profile: 'cycling-mountain' },
+  equilibre: { profile: 'cycling-regular' },
+  court:     { profile: 'cycling-road' },
 }
 
 /**
- * Décode un polyline encodé en précision 6 (format Valhalla).
+ * Décode un polyline encodé en précision 5 (format ORS/Google).
  * Retourne un tableau de [lon, lat].
  */
-function decodePolyline6(encoded) {
+function decodePolyline5(encoded) {
   const coords = []
   let index = 0, lat = 0, lng = 0
 
@@ -43,47 +44,48 @@ function decodePolyline6(encoded) {
     } while (b >= 0x20)
     lng += result & 1 ? ~(result >> 1) : result >> 1
 
-    coords.push([lng / 1e6, lat / 1e6])
+    coords.push([lng / 1e5, lat / 1e5])
   }
   return coords
 }
 
 /**
- * Calcule un itinéraire vélo entre deux points.
+ * Calcule un itinéraire vélo entre deux points via ORS.
  * @param {{ lon: number, lat: number }} from
  * @param {{ lon: number, lat: number }} to
  * @param {'securise'|'equilibre'|'court'} mode
  */
 export async function calculateRoute(from, to, mode = 'equilibre') {
-  const modeParams = ROUTE_MODES[mode] ?? ROUTE_MODES.equilibre
+  const { profile } = ROUTE_MODES[mode] ?? ROUTE_MODES.equilibre
+
   const body = {
-    locations: [
-      { lon: from.lon, lat: from.lat },
-      { lon: to.lon,   lat: to.lat   },
+    coordinates: [
+      [from.lon, from.lat],
+      [to.lon,   to.lat],
     ],
-    costing: 'bicycle',
-    costing_options: {
-      bicycle: {
-        bicycle_type: 'Hybrid',
-        ...modeParams,
-      },
-    },
     units: 'km',
   }
 
-  const res = await fetch(VALHALLA_URL, {
+  const res = await fetch(`${ORS_URL}/${profile}/json`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': ORS_KEY,
+    },
     body: JSON.stringify(body),
   })
 
-  if (!res.ok) throw new Error(`Valhalla ${res.status}`)
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}))
+    throw new Error(`ORS ${res.status}: ${err?.error?.message ?? res.statusText}`)
+  }
 
   const data = await res.json()
-  const leg = data?.trip?.legs?.[0]
-  if (!leg) throw new Error('Aucun itinéraire trouvé')
+  const route = data?.routes?.[0]
+  if (!route) throw new Error('Aucun itinéraire trouvé')
 
-  const coords = decodePolyline6(leg.shape)
+  const coords = decodePolyline5(route.geometry)
+  const summary = route.summary
 
   return {
     geojson: {
@@ -91,7 +93,7 @@ export async function calculateRoute(from, to, mode = 'equilibre') {
       geometry: { type: 'LineString', coordinates: coords },
       properties: {},
     },
-    distance: data.trip.summary.length * 1000, // km → mètres
-    duration: data.trip.summary.time,           // secondes
+    distance: summary.distance * 1000, // km → mètres
+    duration: summary.duration,        // secondes
   }
 }
