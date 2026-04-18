@@ -1,89 +1,56 @@
 /**
- * Routing vélo via Valhalla (instance publique OpenStreetMap).
- * Aucune clé API nécessaire.
- * 3 modes : securise (ciclorutas max), equilibre (compromis), court (distance min)
+ * Routing vélo via GraphHopper.
+ * Profils : bike (sécurisé/équilibré), racingbike (rapide)
+ * Clé API gratuite requise — 500 req/jour
+ * https://graphhopper.com/dashboard/
  */
 
-const VALHALLA_URL = 'https://valhalla1.openstreetmap.de/route'
+const GH_URL = 'https://graphhopper.com/api/1/route'
+const GH_KEY = import.meta.env.VITE_GH_KEY
 
-// Paramètres Valhalla par mode
-// use_roads           : 0 = évite routes, 1 = préfère routes
-// use_tracks          : 0 = évite pistes/ciclorutas, 1 = préfère pistes
-// use_living_streets  : 0 = évite les rues résidentielles (reste sur axes principaux = moins de virages)
-// use_hills           : 0.5 = neutre (on ignore les montées à Bogotá)
-// avoid_bad_surfaces  : évite les surfaces dégradées
+// Véhicules GraphHopper par mode
+// bike        : profil vélo standard, préfère les pistes cyclables (cycleways)
+// mtb         : vélo tout-terrain, préfère les chemins (encore plus sur les pistes)
+// racingbike  : vélo de route, distance minimale
 export const ROUTE_MODES = {
-  securise:  { use_roads: 0.0, use_tracks: 1.0, use_living_streets: 0.1, use_hills: 0.5, avoid_bad_surfaces: 0.5 },
-  equilibre: { use_roads: 0.3, use_tracks: 0.8, use_living_streets: 0.1, use_hills: 0.5, avoid_bad_surfaces: 0.25 },
-  court:     { use_roads: 0.7, use_tracks: 0.5, use_living_streets: 0.1, use_hills: 0.5, avoid_bad_surfaces: 0.1 },
+  securise:  { vehicle: 'mtb' },
+  equilibre: { vehicle: 'bike' },
+  court:     { vehicle: 'racingbike' },
 }
 
 /**
- * Décode un polyline encodé en précision 6 (format Valhalla).
- * Retourne un tableau de [lon, lat].
- */
-function decodePolyline6(encoded) {
-  const coords = []
-  let index = 0, lat = 0, lng = 0
-
-  while (index < encoded.length) {
-    let b, shift = 0, result = 0
-    do {
-      b = encoded.charCodeAt(index++) - 63
-      result |= (b & 0x1f) << shift
-      shift += 5
-    } while (b >= 0x20)
-    lat += result & 1 ? ~(result >> 1) : result >> 1
-
-    shift = 0; result = 0
-    do {
-      b = encoded.charCodeAt(index++) - 63
-      result |= (b & 0x1f) << shift
-      shift += 5
-    } while (b >= 0x20)
-    lng += result & 1 ? ~(result >> 1) : result >> 1
-
-    coords.push([lng / 1e6, lat / 1e6])
-  }
-  return coords
-}
-
-/**
- * Calcule un itinéraire vélo entre deux points.
+ * Calcule un itinéraire vélo entre deux points via GraphHopper.
+ * GraphHopper retourne des coordonnées GeoJSON directement (points: true).
  * @param {{ lon: number, lat: number }} from
  * @param {{ lon: number, lat: number }} to
  * @param {'securise'|'equilibre'|'court'} mode
  */
 export async function calculateRoute(from, to, mode = 'equilibre') {
-  const modeParams = ROUTE_MODES[mode] ?? ROUTE_MODES.equilibre
-  const body = {
-    locations: [
-      { lon: from.lon, lat: from.lat },
-      { lon: to.lon,   lat: to.lat   },
-    ],
-    costing: 'bicycle',
-    costing_options: {
-      bicycle: {
-        bicycle_type: 'Hybrid',
-        ...modeParams,
-      },
-    },
-    units: 'km',
+  const { vehicle } = ROUTE_MODES[mode] ?? ROUTE_MODES.equilibre
+
+  const params = new URLSearchParams({
+    point: `${from.lat},${from.lon}`,
+    key: GH_KEY,
+    vehicle,
+    locale: 'fr',
+    points_encoded: 'false', // coordonnées GeoJSON directement
+  })
+  // Deux points → deux paramètres 'point' (URLSearchParams n'accepte pas les doublons)
+  params.append('point', `${to.lat},${to.lon}`)
+
+  const res = await fetch(`${GH_URL}?${params}`)
+
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}))
+    throw new Error(`GraphHopper ${res.status}: ${err?.message ?? res.statusText}`)
   }
 
-  const res = await fetch(VALHALLA_URL, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(body),
-  })
-
-  if (!res.ok) throw new Error(`Valhalla ${res.status}`)
-
   const data = await res.json()
-  const leg = data?.trip?.legs?.[0]
-  if (!leg) throw new Error('Aucun itinéraire trouvé')
+  const path = data?.paths?.[0]
+  if (!path) throw new Error('Aucun itinéraire trouvé')
 
-  const coords = decodePolyline6(leg.shape)
+  // GraphHopper retourne déjà un GeoJSON LineString avec points_encoded=false
+  const coords = path.points.coordinates // [[lon, lat], ...]
 
   return {
     geojson: {
@@ -91,7 +58,7 @@ export async function calculateRoute(from, to, mode = 'equilibre') {
       geometry: { type: 'LineString', coordinates: coords },
       properties: {},
     },
-    distance: data.trip.summary.length * 1000, // km → mètres
-    duration: data.trip.summary.time,           // secondes
+    distance: path.distance,     // mètres
+    duration: path.time / 1000,  // ms → secondes
   }
 }
