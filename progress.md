@@ -138,27 +138,32 @@
 > Contexte : les itinéraires Valhalla OSM ne collent pas toujours bien au réseau de ciclorutas de Bogotá.
 > Objectif : tester plusieurs moteurs et choisir le meilleur pour la suite.
 
-- [ ] 7bis.1 Benchmark sur 5 trajets représentatifs de Bogotá (nord/sud, est/ouest, mixte)
-- [ ] 7bis.2 Tester **Valhalla OSM** (instance actuelle — `valhalla1.openstreetmap.de`)
-  - avantages : gratuit, pas de clé, profil bicycle configurable
-  - limites : qualité OSM Bogotá inégale, zigzag dans les quartiers
-- [ ] 7bis.3 Tester **OSRM** (`router.project-osrm.org`) avec profil `bike`
-  - plus rapide, mais moins paramétrable que Valhalla
-- [ ] 7bis.4 Tester **GraphHopper** (`graphhopper.com`) — profil `bike` / `mtb` / `racingbike`
-  - API payante mais free tier 500 req/j, meilleur support des cycleways
-- [ ] 7bis.5 Tester **Strava Global Heatmap** routing (si accès API disponible)
-  - basé sur les trajets réels des cyclistes → potentiellement le plus fidèle à Bogotá
-- [ ] 7bis.6 Évaluer **ORS (OpenRouteService)** — `openrouteservice.org`
-  - profil `cycling-regular` / `cycling-safe`, free tier 2000 req/j, clé API gratuite
-- [ ] 7bis.7 Comparer les résultats : % cicloruta, cohérence visuelle, détours
-- [ ] 7bis.8 Choisir le moteur retenu et mettre à jour `useOsrm.js` (ou créer `useRouting.js`)
-- [ ] 7bis.9 Commit : `feat: switch routing engine to [moteur retenu]`
+- [x] 7bis.1 Benchmark sur 3 trajets représentatifs de Bogotá (N-S, E-W, diagonal)
+- [x] 7bis.2 Tester **Valhalla OSM** (branche `main`) — résultats corrects mais zigzag
+- [x] 7bis.3 Tester **ORS** (branche `feat/routing-ors`) — cycling-regular ✅, cycling-safe indispo
+- [x] 7bis.4 Tester **GraphHopper** (branche `feat/routing-graphhopper`) — bike/mtb/racingbike ✅
+- [ ] 7bis.5 **→ PROCHAINE FOIS : choisir le moteur retenu et merger sur `main`**
 
-### ✅ Critères de sélection
-- Le tracé suit les ciclorutas visibles sur la carte (Cl. 26, Av. Boyacá, Cl. 72…)
-- Pas de zigzag inutile dans les rues résidentielles
-- Temps de réponse < 2s
-- Pas de clé API obligatoire (ou free tier suffisant pour le dev)
+### Résultats benchmark (mode équilibré, même trajet)
+| Moteur | Chapinero→Usaquén | Candelaria→Salitre | Kennedy→Av.68 |
+|--------|-------------------|--------------------|---------------|
+| GraphHopper (bike) | 8.9km 30min | 9.5km 35min | 10.4km 42min |
+| ORS (cycling-regular) | 9.2km 30min | 9.9km 37min | 10.4km 42min |
+| Valhalla (equilibre) | 9.2km 33min | 9.8km 34min | 9.5km 34min |
+
+### Notes
+- GH : GeoJSON direct (pas de décodage polyline), 500 req/jour — clé `VITE_GH_KEY`
+- ORS : 2000 req/jour, cycling-safe déprécié — clé `VITE_ORS_KEY`
+- Branches conservées : `feat/routing-ors`, `feat/routing-graphhopper`
+
+---
+
+## 🔴 TODO prochaine session
+
+1. **Choisir le moteur de routing** (GH vs ORS) et merger la branche gagnante sur `main`
+2. **Ciclorutas manquantes** : des pistes vers le Parque del Parkway n'apparaissent pas sur la carte → investiguer (données IDECA incomplètes ? OSM ? autre source ?)
+
+---
 
 ---
 
