@@ -118,13 +118,13 @@
 
 ## Étape 7 — Modes d'itinéraire (sécurisé / court / équilibré)
 
-- [ ] 7.1 Ajouter un sélecteur de mode dans le panneau (3 boutons)
-- [ ] 7.2 Implémenter la logique de pondération des routes selon le mode :
-  - **Court** : paramètres OSRM standards
-  - **Sécurisé** : favoriser les segments sur cicloruta
-  - **Équilibré** : compromis des deux
-- [ ] 7.3 Recalculer et réafficher l'itinéraire au changement de mode
-- [ ] 7.4 Commit : `feat: route modes (safe / short / balanced)`
+- [x] 7.1 Ajouter un sélecteur de mode dans le panneau (3 boutons)
+- [x] 7.2 Implémenter la logique de pondération des routes selon le mode :
+  - **Court** : use_roads:0.7, use_tracks:0.5
+  - **Sécurisé** : use_roads:0.0, use_tracks:1.0 (ciclorutas max)
+  - **Équilibré** : use_roads:0.3, use_tracks:0.8
+- [x] 7.3 Recalculer et réafficher l'itinéraire au changement de mode
+- [x] 7.4 Commit : `feat: route modes (safe / short / balanced)`
 
 ### ✅ Validation étape 7
 - Les 3 modes proposent des tracés différents sur un même trajet test

@@ -7,10 +7,15 @@
 const VALHALLA_URL = 'https://valhalla1.openstreetmap.de/route'
 
 // Paramètres Valhalla par mode
+// use_roads           : 0 = évite routes, 1 = préfère routes
+// use_tracks          : 0 = évite pistes/ciclorutas, 1 = préfère pistes
+// use_living_streets  : 0 = évite les rues résidentielles (reste sur axes principaux = moins de virages)
+// use_hills           : 0.5 = neutre (on ignore les montées à Bogotá)
+// avoid_bad_surfaces  : évite les surfaces dégradées
 export const ROUTE_MODES = {
-  securise:  { use_roads: 0.1, use_living_streets: 1.0, avoid_bad_surfaces: 0.75 },
-  equilibre: { use_roads: 0.4, use_living_streets: 0.8, avoid_bad_surfaces: 0.5  },
-  court:     { use_roads: 0.8, use_living_streets: 0.5, avoid_bad_surfaces: 0.25 },
+  securise:  { use_roads: 0.0, use_tracks: 1.0, use_living_streets: 0.1, use_hills: 0.5, avoid_bad_surfaces: 0.5 },
+  equilibre: { use_roads: 0.3, use_tracks: 0.8, use_living_streets: 0.1, use_hills: 0.5, avoid_bad_surfaces: 0.25 },
+  court:     { use_roads: 0.7, use_tracks: 0.5, use_living_streets: 0.1, use_hills: 0.5, avoid_bad_surfaces: 0.1 },
 }
 
 /**
