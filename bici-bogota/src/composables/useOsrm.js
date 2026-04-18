@@ -1,10 +1,17 @@
 /**
  * Routing vélo via Valhalla (instance publique OpenStreetMap).
  * Aucune clé API nécessaire.
- * Profil bicycle avec forte préférence pour les pistes cyclables (ciclorutas).
+ * 3 modes : securise (ciclorutas max), equilibre (compromis), court (distance min)
  */
 
 const VALHALLA_URL = 'https://valhalla1.openstreetmap.de/route'
+
+// Paramètres Valhalla par mode
+export const ROUTE_MODES = {
+  securise:  { use_roads: 0.1, use_living_streets: 1.0, avoid_bad_surfaces: 0.75 },
+  equilibre: { use_roads: 0.4, use_living_streets: 0.8, avoid_bad_surfaces: 0.5  },
+  court:     { use_roads: 0.8, use_living_streets: 0.5, avoid_bad_surfaces: 0.25 },
+}
 
 /**
  * Décode un polyline encodé en précision 6 (format Valhalla).
@@ -40,10 +47,10 @@ function decodePolyline6(encoded) {
  * Calcule un itinéraire vélo entre deux points.
  * @param {{ lon: number, lat: number }} from
  * @param {{ lon: number, lat: number }} to
- * @returns {{ geojson: GeoJSON.Feature, distance: number, duration: number }}
- *   distance en mètres, duration en secondes
+ * @param {'securise'|'equilibre'|'court'} mode
  */
-export async function calculateRoute(from, to) {
+export async function calculateRoute(from, to, mode = 'equilibre') {
+  const modeParams = ROUTE_MODES[mode] ?? ROUTE_MODES.equilibre
   const body = {
     locations: [
       { lon: from.lon, lat: from.lat },
@@ -53,9 +60,7 @@ export async function calculateRoute(from, to) {
     costing_options: {
       bicycle: {
         bicycle_type: 'Hybrid',
-        use_roads: 0.1,           // 0 = éviter les routes, 1 = routes OK
-        use_living_streets: 1.0,  // préférer les voies douces
-        avoid_bad_surfaces: 0.5,
+        ...modeParams,
       },
     },
     units: 'km',

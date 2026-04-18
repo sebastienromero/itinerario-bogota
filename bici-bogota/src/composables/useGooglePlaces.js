@@ -22,7 +22,7 @@ function loadGoogleMaps() {
 }
 
 export async function getPlaceSuggestions(input) {
-  if (!input || input.length < 3) return []
+  if (!input) return []
 
   try {
     await loadGoogleMaps()

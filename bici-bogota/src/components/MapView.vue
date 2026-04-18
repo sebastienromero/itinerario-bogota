@@ -15,7 +15,7 @@ import maplibregl from 'maplibre-gl'
 import 'maplibre-gl/dist/maplibre-gl.css'
 import { useRouteStore } from '../stores/route.js'
 
-const showCycling = ref(false)
+const showCycling = ref(true)
 let mapInstance = null
 
 const store = useRouteStore()
@@ -86,8 +86,8 @@ onMounted(async () => {
   const map = new maplibregl.Map({
     container: 'map',
     style: 'https://tiles.openfreemap.org/styles/bright',
-    center: [-74.0721, 4.711],
-    zoom: 13,
+    center: [-74.0862, 4.6735],
+    zoom: 12,
     antialias: true,
     fadeDuration: 0,
     localIdeographFontFamily: 'sans-serif',
@@ -107,7 +107,7 @@ onMounted(async () => {
       id: 'cycling-layer',
       type: 'line',
       source: 'cycling',
-      layout: { 'line-join': 'round', 'line-cap': 'round', visibility: 'none' },
+      layout: { 'line-join': 'round', 'line-cap': 'round', visibility: 'visible' },
       paint: { 'line-color': '#000000', 'line-width': 1.5, 'line-opacity': 0.85 },
     })
 

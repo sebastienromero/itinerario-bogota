@@ -60,12 +60,12 @@ watch(() => props.modelValue, (val) => {
 function onInput() {
   activeIdx.value = -1
   clearTimeout(debounceTimer)
-  if (query.value.length < 3) {
+  if (query.value.length < 1) {
     suggestions.value = []
     open.value = false
     return
   }
-  debounceTimer = setTimeout(fetchSuggestions, 350)
+  debounceTimer = setTimeout(fetchSuggestions, 150)
 }
 
 async function fetchSuggestions() {

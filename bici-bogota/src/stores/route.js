@@ -1,5 +1,5 @@
 import { defineStore } from 'pinia'
-import { ref } from 'vue'
+import { ref, watch } from 'vue'
 
 export const useRouteStore = defineStore('route', () => {
   const depart = ref(null)        // { label, lon, lat }
@@ -8,6 +8,7 @@ export const useRouteStore = defineStore('route', () => {
   const distance = ref(null)      // mètres
   const duration = ref(null)      // secondes
   const loading = ref(false)
+  const mode = ref('equilibre')   // 'securise' | 'equilibre' | 'court'
 
   function setDepart(place) { depart.value = place }
   function setArrivee(place) { arrivee.value = place }
@@ -24,5 +25,10 @@ export const useRouteStore = defineStore('route', () => {
     duration.value = null
   }
 
-  return { depart, arrivee, routeGeojson, distance, duration, loading, setDepart, setArrivee, swap, clearRoute }
+  // Effacer l'itinéraire dès qu'une adresse est supprimée
+  watch([depart, arrivee], ([d, a]) => {
+    if (!d || !a) clearRoute()
+  })
+
+  return { depart, arrivee, routeGeojson, distance, duration, loading, mode, setDepart, setArrivee, swap, clearRoute }
 })
