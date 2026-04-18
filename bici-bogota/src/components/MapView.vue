@@ -14,6 +14,7 @@ import { onMounted, ref, watch } from 'vue'
 import maplibregl from 'maplibre-gl'
 import 'maplibre-gl/dist/maplibre-gl.css'
 import { useRouteStore } from '../stores/route.js'
+
 const showCycling = ref(false)
 let mapInstance = null
 
@@ -47,14 +48,13 @@ watch(() => store.arrivee, (place) => {
   mapInstance.flyTo({ center: [place.lon, place.lat], zoom: 15, duration: 800 })
 })
 
-// Tracé OSRM
+// Tracé de l'itinéraire
 watch(() => store.routeGeojson, (geojson) => {
   if (!mapInstance) return
 
-  // Supprimer le tracé existant
+  // Supprimer tracé précédent si existe
   if (mapInstance.getLayer('route-layer')) mapInstance.removeLayer('route-layer')
   if (mapInstance.getSource('route')) mapInstance.removeSource('route')
-
   if (!geojson) return
 
   mapInstance.addSource('route', { type: 'geojson', data: geojson })
@@ -63,22 +63,17 @@ watch(() => store.routeGeojson, (geojson) => {
     type: 'line',
     source: 'route',
     layout: { 'line-join': 'round', 'line-cap': 'round' },
-    paint: {
-      'line-color': '#1565c0',
-      'line-width': 5,
-      'line-opacity': 0.85,
-    },
+    paint: { 'line-color': '#1565c0', 'line-width': 5, 'line-opacity': 0.85 },
   })
 
-  // FitBounds sur le tracé
+  // Recentrer la carte sur le tracé
   const coords = geojson.geometry.coordinates
   const lngs = coords.map(c => c[0])
   const lats = coords.map(c => c[1])
-  const bounds = [
-    [Math.min(...lngs), Math.min(...lats)],
-    [Math.max(...lngs), Math.max(...lats)],
-  ]
-  mapInstance.fitBounds(bounds, { padding: 80, duration: 1000 })
+  mapInstance.fitBounds(
+    [[Math.min(...lngs), Math.min(...lats)], [Math.max(...lngs), Math.max(...lats)]],
+    { padding: 80, duration: 1000 }
+  )
 })
 
 function toggleCycling() {
@@ -97,7 +92,6 @@ onMounted(async () => {
     fadeDuration: 0,
     localIdeographFontFamily: 'sans-serif',
     maxZoom: 18,
-    renderWorldCopies: false,
   })
   mapInstance = map
 
@@ -143,7 +137,6 @@ onMounted(async () => {
   height: 100vh;
   height: 100dvh; /* exclut les barres UI sur iOS Safari */
   position: relative;
-  background-color: #f2efe9; /* couleur de fond du style bright, évite les tuiles grises */
   /* Force GPU compositing sur Safari iOS */
   -webkit-transform: translateZ(0);
   transform: translateZ(0);

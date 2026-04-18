@@ -22,20 +22,22 @@
       </button>
     </div>
 
+    <!-- Bouton calculer (visible seulement quand départ + arrivée définis) -->
     <button
       v-if="store.depart && store.arrivee"
       class="go-btn"
       :disabled="store.loading"
       @click="onCalculer"
     >
-      <span v-if="store.loading">⏳ Calcul…</span>
+      <span v-if="store.loading">⏳ Calcul en cours…</span>
       <span v-else>🚴 Calculer l'itinéraire</span>
     </button>
 
+    <!-- Résultat distance + durée -->
     <div v-if="store.distance !== null" class="route-info">
-      <span class="info-item">📏 {{ formatDistance(store.distance) }}</span>
-      <span class="info-sep">·</span>
-      <span class="info-item">⏱ {{ formatDuration(store.duration) }}</span>
+      <span>📏 {{ formatDistance(store.distance) }}</span>
+      <span class="sep">·</span>
+      <span>⏱ {{ formatDuration(store.duration) }}</span>
     </div>
   </div>
 </template>
@@ -50,13 +52,14 @@ const store = useRouteStore()
 async function onCalculer() {
   if (!store.depart || !store.arrivee) return
   store.loading = true
+  store.clearRoute()
   try {
     const result = await calculateRoute(store.depart, store.arrivee)
     store.routeGeojson = result.geojson
     store.distance = result.distance
     store.duration = result.duration
   } catch (e) {
-    console.error('[OSRM]', e)
+    console.error('[Route]', e)
     alert('Impossible de calculer l\'itinéraire. Réessaie.')
   } finally {
     store.loading = false
@@ -170,14 +173,8 @@ function formatDuration(s) {
   transition: background 0.15s;
 }
 
-.go-btn:hover:not(:disabled) {
-  background: #1b5e20;
-}
-
-.go-btn:disabled {
-  opacity: 0.6;
-  cursor: default;
-}
+.go-btn:hover:not(:disabled) { background: #1b5e20; }
+.go-btn:disabled { opacity: 0.6; cursor: default; }
 
 .route-info {
   display: flex;
@@ -192,77 +189,5 @@ function formatDuration(s) {
   color: #2e7d32;
 }
 
-.info-sep {
-  color: #aaa;
-}
+.sep { color: #aaa; }
 </style>
-
-.search-inputs {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.inputs-col {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-}
-
-.search-input-wrap {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 6px 0;
-}
-
-.search-icon {
-  font-size: 14px;
-  width: 20px;
-  text-align: center;
-  flex-shrink: 0;
-}
-
-.search-input {
-  border: none;
-  outline: none;
-  font-size: 15px;
-  width: 100%;
-  background: transparent;
-  color: #222;
-}
-
-.search-input::placeholder {
-  color: #aaa;
-}
-
-.search-divider {
-  height: 1px;
-  background: #f0f0f0;
-  margin: 0 28px;
-}
-
-.swap-btn {
-  flex-shrink: 0;
-  width: 34px;
-  height: 34px;
-  border-radius: 50%;
-  border: 1.5px solid #e0e0e0;
-  background: #fafafa;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: #555;
-  transition: background 0.15s, color 0.15s;
-}
-
-.swap-btn:hover {
-  background: #e8f5e9;
-  color: #2e7d32;
-  border-color: #a5d6a7;
-}
-
-.swap-btn:active {
-  background: #c8e6c9;
-}

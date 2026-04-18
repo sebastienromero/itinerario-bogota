@@ -58,10 +58,10 @@
 
 ## Étape 3 — Structure de l'interface
 
-- [ ] 3.1 Créer le panneau latéral gauche (composant `SidePanel.vue`)
-- [ ] 3.2 Mettre en place le layout : panneau gauche + carte à droite
-- [ ] 3.3 Rendre le layout responsive : panneau en bas sur mobile, à gauche sur desktop
-- [ ] 3.4 Commit : `feat: add responsive layout with side panel`
+- [x] 3.1 Créer le panneau latéral gauche (composant `SidePanel.vue`)
+- [x] 3.2 Mettre en place le layout : panneau gauche + carte à droite
+- [x] 3.3 Rendre le layout responsive : panneau en bas sur mobile, à gauche sur desktop
+- [x] 3.4 Commit : `feat: add responsive layout with side panel`
 
 ### ✅ Validation étape 3
 - Sur mobile (375px) : le panneau est en bas, la carte en haut
@@ -72,11 +72,11 @@
 
 ## Étape 4 — Saisie du trajet (Départ / Arrivée)
 
-- [ ] 4.1 Ajouter deux champs de saisie texte (Départ, Arrivée) dans le panneau
-- [ ] 4.2 Brancher l'autocomplétion sur **Nominatim** (OSM Geocoding API)
-- [ ] 4.3 Afficher les suggestions dans une liste déroulante
-- [ ] 4.4 Placer un marqueur sur la carte lors de la sélection d'une adresse
-- [ ] 4.5 Commit : `feat: address search with Nominatim autocomplete`
+- [x] 4.1 Ajouter deux champs de saisie texte (Départ, Arrivée) dans le panneau
+- [x] 4.2 Brancher l'autocomplétion sur **Google Places** (AutocompleteService)
+- [x] 4.3 Afficher les suggestions dans une liste déroulante
+- [x] 4.4 Placer un marqueur sur la carte lors de la sélection d'une adresse
+- [x] 4.5 Commit : `feat: add search panel with Google Places autocomplete`
 
 ### ✅ Validation étape 4
 - Taper "Usaquén" propose des suggestions correctes
@@ -88,11 +88,11 @@
 
 ## Étape 5 — Calcul et affichage de l'itinéraire
 
-- [ ] 5.1 Appeler l'**API OSRM** avec les coordonnées départ/arrivée (profil vélo)
-- [ ] 5.2 Décoder et afficher le tracé de l'itinéraire sur la carte (polyligne)
-- [ ] 5.3 Centrer/zoomer la carte sur l'itinéraire calculé
-- [ ] 5.4 Afficher dans le panneau : distance totale et durée estimée
-- [ ] 5.5 Commit : `feat: route calculation with OSRM and display on map`
+- [x] 5.1 Appeler **Valhalla** (instance publique OSM) avec profil bicycle (préfère les ciclorutas)
+- [x] 5.2 Décoder et afficher le tracé de l'itinéraire sur la carte (polyligne bleue)
+- [x] 5.3 Centrer/zoomer la carte sur l'itinéraire calculé (fitBounds)
+- [x] 5.4 Afficher dans le panneau : distance totale et durée estimée
+- [x] 5.5 Commit : `feat: route calculation with Valhalla bicycle routing`
 
 ### ✅ Validation étape 5
 - Un itinéraire s'affiche entre deux adresses de Bogotá
