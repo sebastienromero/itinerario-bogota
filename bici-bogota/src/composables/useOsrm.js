@@ -1,51 +1,71 @@
 /**
- * Routing vélo via Valhalla (instance publique OpenStreetMap).
- * Aucune clé API nécessaire.
- * 3 modes : securise (ciclorutas max), equilibre (compromis), court (distance min)
+ * Calcul d'itinéraire vélo via BRouter (profils adaptés au cyclisme).
+ * Modes : safety (sécurisé), trekking (équilibré), shortest (court).
+ * Secours : OSRM si BRouter est indisponible.
  */
 
-const VALHALLA_URL = 'https://valhalla1.openstreetmap.de/route'
+const BROUTER_URL = 'https://brouter.de/brouter'
+const OSRM_URL = 'https://router.project-osrm.org/route/v1/bike'
 
-// Paramètres Valhalla par mode
-// use_roads           : 0 = évite routes, 1 = préfère routes
-// use_tracks          : 0 = évite pistes/ciclorutas, 1 = préfère pistes
-// use_living_streets  : 0 = évite les rues résidentielles (reste sur axes principaux = moins de virages)
-// use_hills           : 0.5 = neutre (on ignore les montées à Bogotá)
-// avoid_bad_surfaces  : évite les surfaces dégradées
-export const ROUTE_MODES = {
-  securise:  { use_roads: 0.0, use_tracks: 1.0, use_living_streets: 0.1, use_hills: 0.5, avoid_bad_surfaces: 0.5 },
-  equilibre: { use_roads: 0.3, use_tracks: 0.8, use_living_streets: 0.1, use_hills: 0.5, avoid_bad_surfaces: 0.25 },
-  court:     { use_roads: 0.7, use_tracks: 0.5, use_living_streets: 0.1, use_hills: 0.5, avoid_bad_surfaces: 0.1 },
+// Profils BRouter : https://github.com/abrensch/brouter/tree/master/misc/profiles2
+const BROUTER_PROFILES = {
+  securise: 'safety',   // privilégie pistes cyclables et routes calmes
+  equilibre: 'trekking', // compromis vélo urbain
+  court: 'shortest',    // distance minimale
 }
 
-/**
- * Décode un polyline encodé en précision 6 (format Valhalla).
- * Retourne un tableau de [lon, lat].
- */
-function decodePolyline6(encoded) {
-  const coords = []
-  let index = 0, lat = 0, lng = 0
+export const ROUTE_MODES = {
+  securise: 'securise',
+  equilibre: 'equilibre',
+  court: 'court',
+}
 
-  while (index < encoded.length) {
-    let b, shift = 0, result = 0
-    do {
-      b = encoded.charCodeAt(index++) - 63
-      result |= (b & 0x1f) << shift
-      shift += 5
-    } while (b >= 0x20)
-    lat += result & 1 ? ~(result >> 1) : result >> 1
+async function routeWithBRouter(from, to, mode) {
+  const profile = BROUTER_PROFILES[mode] ?? BROUTER_PROFILES.equilibre
+  const lonlats = `${from.lon},${from.lat}|${to.lon},${to.lat}`
+  const url = `${BROUTER_URL}?lonlats=${encodeURIComponent(lonlats)}&profile=${profile}&format=geojson&alternativeidx=0`
 
-    shift = 0; result = 0
-    do {
-      b = encoded.charCodeAt(index++) - 63
-      result |= (b & 0x1f) << shift
-      shift += 5
-    } while (b >= 0x20)
-    lng += result & 1 ? ~(result >> 1) : result >> 1
+  const res = await fetch(url)
+  if (!res.ok) throw new Error(`BRouter ${res.status}`)
 
-    coords.push([lng / 1e6, lat / 1e6])
+  const data = await res.json()
+  const feature = data.features?.[0]
+  const coords = feature?.geometry?.coordinates
+  if (!coords?.length) throw new Error('Aucun itinéraire trouvé')
+
+  return {
+    geojson: {
+      type: 'Feature',
+      geometry: feature.geometry,
+      properties: { mode, engine: 'brouter', profile },
+    },
+    distance: Number(feature.properties['track-length']),
+    duration: Number(feature.properties['total-time']),
   }
-  return coords
+}
+
+async function routeWithOSRM(from, to, mode) {
+  const coords = `${from.lon},${from.lat};${to.lon},${to.lat}`
+  const url = `${OSRM_URL}/${coords}?overview=full&geometries=geojson`
+
+  const res = await fetch(url)
+  if (!res.ok) throw new Error(`OSRM ${res.status}`)
+
+  const data = await res.json()
+  if (data.code !== 'Ok' || !data.routes?.[0]) {
+    throw new Error(data.message || 'Aucun itinéraire trouvé')
+  }
+
+  const route = data.routes[0]
+  return {
+    geojson: {
+      type: 'Feature',
+      geometry: route.geometry,
+      properties: { mode, engine: 'osrm' },
+    },
+    distance: route.distance,
+    duration: route.duration,
+  }
 }
 
 /**
@@ -55,43 +75,14 @@ function decodePolyline6(encoded) {
  * @param {'securise'|'equilibre'|'court'} mode
  */
 export async function calculateRoute(from, to, mode = 'equilibre') {
-  const modeParams = ROUTE_MODES[mode] ?? ROUTE_MODES.equilibre
-  const body = {
-    locations: [
-      { lon: from.lon, lat: from.lat },
-      { lon: to.lon,   lat: to.lat   },
-    ],
-    costing: 'bicycle',
-    costing_options: {
-      bicycle: {
-        bicycle_type: 'Hybrid',
-        ...modeParams,
-      },
-    },
-    units: 'km',
+  if (from?.lon == null || from?.lat == null || to?.lon == null || to?.lat == null) {
+    throw new Error('Coordonnées départ/arrivée manquantes — choisis une adresse dans la liste')
   }
 
-  const res = await fetch(VALHALLA_URL, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(body),
-  })
-
-  if (!res.ok) throw new Error(`Valhalla ${res.status}`)
-
-  const data = await res.json()
-  const leg = data?.trip?.legs?.[0]
-  if (!leg) throw new Error('Aucun itinéraire trouvé')
-
-  const coords = decodePolyline6(leg.shape)
-
-  return {
-    geojson: {
-      type: 'Feature',
-      geometry: { type: 'LineString', coordinates: coords },
-      properties: {},
-    },
-    distance: data.trip.summary.length * 1000, // km → mètres
-    duration: data.trip.summary.time,           // secondes
+  try {
+    return await routeWithBRouter(from, to, mode)
+  } catch (e) {
+    console.warn('[Route] BRouter indisponible, secours OSRM:', e.message)
+    return routeWithOSRM(from, to, mode)
   }
 }
