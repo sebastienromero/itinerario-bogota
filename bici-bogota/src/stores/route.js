@@ -8,7 +8,6 @@ export const useRouteStore = defineStore('route', () => {
   const distance = ref(null)      // mètres
   const duration = ref(null)      // secondes
   const loading = ref(false)
-  const mode = ref('equilibre')   // 'securise' | 'equilibre' | 'court'
 
   function setDepart(place) { depart.value = place }
   function setArrivee(place) { arrivee.value = place }
@@ -30,5 +29,5 @@ export const useRouteStore = defineStore('route', () => {
     if (!d || !a) clearRoute()
   })
 
-  return { depart, arrivee, routeGeojson, distance, duration, loading, mode, setDepart, setArrivee, swap, clearRoute }
+  return { depart, arrivee, routeGeojson, distance, duration, loading, setDepart, setArrivee, swap, clearRoute }
 })

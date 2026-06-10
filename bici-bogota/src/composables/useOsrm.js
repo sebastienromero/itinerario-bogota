@@ -1,29 +1,15 @@
 /**
- * Calcul d'itinéraire vélo via BRouter (profils adaptés au cyclisme).
- * Modes : safety (sécurisé), trekking (équilibré), shortest (court).
+ * Calcul d'itinéraire vélo via BRouter (profil shortest = distance minimale).
  * Secours : OSRM si BRouter est indisponible.
  */
 
 const BROUTER_URL = 'https://brouter.de/brouter'
 const OSRM_URL = 'https://router.project-osrm.org/route/v1/bike'
+const BROUTER_PROFILE = 'shortest'
 
-// Profils BRouter : https://github.com/abrensch/brouter/tree/master/misc/profiles2
-const BROUTER_PROFILES = {
-  securise: 'safety',   // privilégie pistes cyclables et routes calmes
-  equilibre: 'trekking', // compromis vélo urbain
-  court: 'shortest',    // distance minimale
-}
-
-export const ROUTE_MODES = {
-  securise: 'securise',
-  equilibre: 'equilibre',
-  court: 'court',
-}
-
-async function routeWithBRouter(from, to, mode) {
-  const profile = BROUTER_PROFILES[mode] ?? BROUTER_PROFILES.equilibre
+async function routeWithBRouter(from, to) {
   const lonlats = `${from.lon},${from.lat}|${to.lon},${to.lat}`
-  const url = `${BROUTER_URL}?lonlats=${encodeURIComponent(lonlats)}&profile=${profile}&format=geojson&alternativeidx=0`
+  const url = `${BROUTER_URL}?lonlats=${encodeURIComponent(lonlats)}&profile=${BROUTER_PROFILE}&format=geojson&alternativeidx=0`
 
   const res = await fetch(url)
   if (!res.ok) throw new Error(`BRouter ${res.status}`)
@@ -37,14 +23,14 @@ async function routeWithBRouter(from, to, mode) {
     geojson: {
       type: 'Feature',
       geometry: feature.geometry,
-      properties: { mode, engine: 'brouter', profile },
+      properties: { engine: 'brouter', profile: BROUTER_PROFILE },
     },
     distance: Number(feature.properties['track-length']),
     duration: Number(feature.properties['total-time']),
   }
 }
 
-async function routeWithOSRM(from, to, mode) {
+async function routeWithOSRM(from, to) {
   const coords = `${from.lon},${from.lat};${to.lon},${to.lat}`
   const url = `${OSRM_URL}/${coords}?overview=full&geometries=geojson`
 
@@ -61,7 +47,7 @@ async function routeWithOSRM(from, to, mode) {
     geojson: {
       type: 'Feature',
       geometry: route.geometry,
-      properties: { mode, engine: 'osrm' },
+      properties: { engine: 'osrm' },
     },
     distance: route.distance,
     duration: route.duration,
@@ -69,20 +55,19 @@ async function routeWithOSRM(from, to, mode) {
 }
 
 /**
- * Calcule un itinéraire vélo entre deux points.
+ * Calcule l'itinéraire vélo le plus court entre deux points.
  * @param {{ lon: number, lat: number }} from
  * @param {{ lon: number, lat: number }} to
- * @param {'securise'|'equilibre'|'court'} mode
  */
-export async function calculateRoute(from, to, mode = 'equilibre') {
+export async function calculateRoute(from, to) {
   if (from?.lon == null || from?.lat == null || to?.lon == null || to?.lat == null) {
     throw new Error('Coordonnées départ/arrivée manquantes — choisis une adresse dans la liste')
   }
 
   try {
-    return await routeWithBRouter(from, to, mode)
+    return await routeWithBRouter(from, to)
   } catch (e) {
     console.warn('[Route] BRouter indisponible, secours OSRM:', e.message)
-    return routeWithOSRM(from, to, mode)
+    return routeWithOSRM(from, to)
   }
 }
