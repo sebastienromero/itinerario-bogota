@@ -1,77 +1,61 @@
-let loadPromise = null
+/**
+ * Recherche d'adresses gratuite via le géocodeur public ArcGIS.
+ */
 
-function loadGoogleMaps() {
-  if (loadPromise) return loadPromise
-
-  loadPromise = new Promise((resolve, reject) => {
-    if (window.google?.maps?.places) {
-      resolve()
-      return
-    }
-    const key = import.meta.env.VITE_GOOGLE_MAPS_KEY
-    const script = document.createElement('script')
-    script.src = `https://maps.googleapis.com/maps/api/js?key=${key}&libraries=places&language=es&region=CO`
-    script.async = true
-    script.defer = true
-    script.onload = resolve
-    script.onerror = reject
-    document.head.appendChild(script)
-  })
-
-  return loadPromise
-}
+const ARCGIS_URL = 'https://geocode.arcgis.com/arcgis/rest/services/World/GeocodeServer'
+const BOGOTA_BOUNDS = '-74.25,4.55,-73.95,4.85'
+const resultsCache = new Map()
 
 export async function getPlaceSuggestions(input) {
-  if (!input) return []
+  const query = input?.trim()
+  if (!query) return []
+  if (resultsCache.has(query)) return resultsCache.get(query)
 
-  try {
-    await loadGoogleMaps()
-    const service = new window.google.maps.places.AutocompleteService()
+  const params = new URLSearchParams({
+    SingleLine: `${query}, Bogotá, Colombia`,
+    searchExtent: BOGOTA_BOUNDS,
+    countryCode: 'COL',
+    category: 'Address,POI',
+    maxLocations: '5',
+    f: 'json',
+  })
+  const response = await fetch(`${ARCGIS_URL}/findAddressCandidates?${params}`)
+  if (!response.ok) throw new Error(`ArcGIS ${response.status}`)
 
-    return new Promise((resolve) => {
-      service.getPlacePredictions(
-        {
-          input,
-          componentRestrictions: { country: 'co' },
-          location: new window.google.maps.LatLng(4.711, -74.0721),
-          radius: 30000,
-        },
-        (predictions, status) => {
-          const OK = window.google.maps.places.PlacesServiceStatus.OK
-          if (status !== OK || !predictions) {
-            resolve([])
-            return
-          }
-          resolve(predictions)
-        }
-      )
-    })
-  } catch (e) {
-    console.error('[Places] erreur:', e)
-    return []
-  }
+  const results = (await response.json()).candidates
+    .filter((result) => result.location && result.score >= 70)
+    .map((result, index) => ({
+      place_id: `${result.location.x},${result.location.y},${index}`,
+      description: result.address,
+      lat: result.location.y,
+      lon: result.location.x,
+  }))
+  resultsCache.set(query, results)
+  return results
 }
 
 export async function getPlaceCoords(placeId) {
-  await loadGoogleMaps()
-  const div = document.createElement('div')
-  const service = new window.google.maps.places.PlacesService(div)
-  const OK = window.google.maps.places.PlacesServiceStatus.OK
+  for (const results of resultsCache.values()) {
+    const result = results.find((item) => item.place_id === String(placeId))
+    if (result) {
+      return { label: result.description, lat: result.lat, lon: result.lon }
+    }
+  }
+  throw new Error('Adresse introuvable')
+}
 
-  return new Promise((resolve, reject) => {
-    service.getDetails(
-      { placeId, fields: ['geometry', 'formatted_address'] },
-      (place, status) => {
-        if (status !== OK || !place) {
-          reject(new Error('Place details failed'))
-          return
-        }
-        resolve({
-          label: place.formatted_address,
-          lat: place.geometry.location.lat(),
-          lon: place.geometry.location.lng(),
-        })
-      }
-    )
-  })
+export async function reverseGeocode(lon, lat) {
+  try {
+    const params = new URLSearchParams({
+      location: `${lon},${lat}`,
+      f: 'json',
+    })
+    const response = await fetch(`${ARCGIS_URL}/reverseGeocode?${params}`)
+    if (!response.ok) throw new Error(`ArcGIS ${response.status}`)
+    const result = await response.json()
+    return result.address?.LongLabel || `Point (${lat.toFixed(5)}, ${lon.toFixed(5)})`
+  } catch (error) {
+    console.warn('[Geocode] ArcGIS:', error.message)
+    return `Point (${lat.toFixed(5)}, ${lon.toFixed(5)})`
+  }
 }

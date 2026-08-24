@@ -22,21 +22,6 @@
       </button>
     </div>
 
-    <!-- Sélecteur de mode -->
-    <div class="mode-btns">
-      <button
-        v-for="m in [
-          { key: 'securise',  label: '🛡️ Sécurisé' },
-          { key: 'equilibre', label: '⚖️ Équilibré' },
-          { key: 'court',     label: '⚡ Court' },
-        ]"
-        :key="m.key"
-        class="mode-btn"
-        :class="{ active: store.mode === m.key }"
-        @click="store.mode = m.key"
-      >{{ m.label }}</button>
-    </div>
-
     <!-- Bouton calculer (toujours visible, désactivé si incomplet) -->
     <button
       class="go-btn"
@@ -68,7 +53,7 @@ async function onCalculer() {
   store.loading = true
   store.clearRoute()
   try {
-    const result = await calculateRoute(store.depart, store.arrivee, store.mode)
+    const result = await calculateRoute(store.depart, store.arrivee)
     store.routeGeojson = result.geojson
     store.distance = result.distance
     store.duration = result.duration
@@ -189,28 +174,6 @@ function formatDuration(s) {
 
 .go-btn:hover:not(:disabled) { background: #1b5e20; }
 .go-btn:disabled { opacity: 0.6; cursor: default; }
-
-.mode-btns {
-  display: flex;
-  gap: 6px;
-}
-.mode-btn {
-  flex: 1;
-  padding: 6px 4px;
-  border: 1.5px solid #e0e0e0;
-  border-radius: 8px;
-  background: #f5f5f5;
-  font-size: 12px;
-  cursor: pointer;
-  color: #555;
-  transition: all 0.15s;
-}
-.mode-btn.active {
-  border-color: #1565c0;
-  background: #e3f0ff;
-  color: #1565c0;
-  font-weight: 600;
-}
 
 .route-info {
   display: flex;

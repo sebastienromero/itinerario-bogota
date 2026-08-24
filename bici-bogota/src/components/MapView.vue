@@ -79,7 +79,10 @@ watch(() => store.routeGeojson, (geojson) => {
 function toggleCycling() {
   if (!mapInstance.getLayer('cycling-layer')) return
   showCycling.value = !showCycling.value
-  mapInstance.setLayoutProperty('cycling-layer', 'visibility', showCycling.value ? 'visible' : 'none')
+  const vis = showCycling.value ? 'visible' : 'none'
+  mapInstance.setLayoutProperty('cycling-layer', 'visibility', vis)
+  if (mapInstance.getLayer('cycling-outline'))
+    mapInstance.setLayoutProperty('cycling-outline', 'visibility', vis)
 }
 
 onMounted(async () => {
@@ -103,12 +106,20 @@ onMounted(async () => {
       type: 'geojson',
       data: '/ciclorutas.geojson',
     })
+    // Données IDU = Polygones → layer fill + outline
     map.addLayer({
       id: 'cycling-layer',
+      type: 'fill',
+      source: 'cycling',
+      layout: { visibility: 'visible' },
+      paint: { 'fill-color': '#000000', 'fill-opacity': 0.85 },
+    })
+    map.addLayer({
+      id: 'cycling-outline',
       type: 'line',
       source: 'cycling',
-      layout: { 'line-join': 'round', 'line-cap': 'round', visibility: 'visible' },
-      paint: { 'line-color': '#000000', 'line-width': 1.5, 'line-opacity': 0.85 },
+      layout: { visibility: 'visible' },
+      paint: { 'line-color': '#000000', 'line-width': 2, 'line-opacity': 0.9 },
     })
 
     // Labels de rues plus lisibles (une seule fois)
