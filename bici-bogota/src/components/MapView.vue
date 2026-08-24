@@ -171,7 +171,7 @@ onMounted(async () => {
 /* Mobile : juste sous le panneau de recherche */
 @media (max-width: 767px) {
   .toggle-wrap {
-    top: 120px;
+    top: 160px;
     right: 10px;
     bottom: auto;
   }
