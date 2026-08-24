@@ -22,6 +22,10 @@
       </button>
     </div>
 
+    <button class="location-btn" :disabled="locating" @click="useMyLocation">
+      <span>{{ locating ? '⏳ Recherche de la position…' : '📍 Utiliser ma position comme départ' }}</span>
+    </button>
+
     <!-- Bouton calculer (toujours visible, désactivé si incomplet) -->
     <button
       class="go-btn"
@@ -45,8 +49,29 @@
 import SearchInput from './SearchInput.vue'
 import { useRouteStore } from '../stores/route.js'
 import { calculateRoute } from '../composables/useOsrm.js'
+import { reverseGeocode } from '../composables/useGooglePlaces.js'
+import { ref } from 'vue'
 
 const store = useRouteStore()
+const locating = ref(false)
+
+function useMyLocation() {
+  if (!navigator.geolocation) {
+    alert('La géolocalisation n’est pas disponible sur cet appareil.')
+    return
+  }
+
+  locating.value = true
+  navigator.geolocation.getCurrentPosition(async ({ coords }) => {
+    const label = await reverseGeocode(coords.longitude, coords.latitude)
+    store.setDepart({ label, lat: coords.latitude, lon: coords.longitude })
+    locating.value = false
+  }, (error) => {
+    console.error('[Geolocation]', error)
+    alert('Impossible d’obtenir ta position. Autorise la géolocalisation puis réessaie.')
+    locating.value = false
+  }, { enableHighAccuracy: true, timeout: 10000 })
+}
 
 async function onCalculer() {
   if (!store.depart || !store.arrivee) return
@@ -132,6 +157,22 @@ function formatDuration(s) {
   height: 1px;
   background: #f0f0f0;
   margin: 0 28px;
+}
+
+.location-btn {
+  width: 100%;
+  padding: 8px;
+  border: 1px solid #c8e6c9;
+  border-radius: 9px;
+  background: #f1f8e9;
+  color: #2e7d32;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.location-btn:disabled {
+  opacity: 0.65;
+  cursor: wait;
 }
 
 .swap-btn {
