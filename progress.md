@@ -131,36 +131,6 @@
 - Le mode "sécurisé" passe davantage par les ciclorutas visibles sur la carte
 - Le changement de mode est instantané (ou avec un loader)
 
----
-
-## Étape 7bis — Évaluation et comparaison des moteurs de routing vélo
-
-> Contexte : les itinéraires Valhalla OSM ne collent pas toujours bien au réseau de ciclorutas de Bogotá.
-> Objectif : tester plusieurs moteurs et choisir le meilleur pour la suite.
-
-- [ ] 7bis.1 Benchmark sur 5 trajets représentatifs de Bogotá (nord/sud, est/ouest, mixte)
-- [ ] 7bis.2 Tester **Valhalla OSM** (instance actuelle — `valhalla1.openstreetmap.de`)
-  - avantages : gratuit, pas de clé, profil bicycle configurable
-  - limites : qualité OSM Bogotá inégale, zigzag dans les quartiers
-- [ ] 7bis.3 Tester **OSRM** (`router.project-osrm.org`) avec profil `bike`
-  - plus rapide, mais moins paramétrable que Valhalla
-- [ ] 7bis.4 Tester **GraphHopper** (`graphhopper.com`) — profil `bike` / `mtb` / `racingbike`
-  - API payante mais free tier 500 req/j, meilleur support des cycleways
-- [ ] 7bis.5 Tester **Strava Global Heatmap** routing (si accès API disponible)
-  - basé sur les trajets réels des cyclistes → potentiellement le plus fidèle à Bogotá
-- [ ] 7bis.6 Évaluer **ORS (OpenRouteService)** — `openrouteservice.org`
-  - profil `cycling-regular` / `cycling-safe`, free tier 2000 req/j, clé API gratuite
-- [ ] 7bis.7 Comparer les résultats : % cicloruta, cohérence visuelle, détours
-- [ ] 7bis.8 Choisir le moteur retenu et mettre à jour `useOsrm.js` (ou créer `useRouting.js`)
-- [ ] 7bis.9 Commit : `feat: switch routing engine to [moteur retenu]`
-
-### ✅ Critères de sélection
-- Le tracé suit les ciclorutas visibles sur la carte (Cl. 26, Av. Boyacá, Cl. 72…)
-- Pas de zigzag inutile dans les rues résidentielles
-- Temps de réponse < 2s
-- Pas de clé API obligatoire (ou free tier suffisant pour le dev)
-
----
 
 ## Étape 8 — Géolocalisation et pin draggable
 
